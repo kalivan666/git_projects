@@ -7,17 +7,22 @@ import os
 def treatment(path):
     dotakeys = open(path, 'r+')
     a = dotakeys.readlines()
-    b = a.index('\t\t\t"Key"\t\t"A"\n')
-    if b == 65:
-        a.pop(73)
-        a.insert(73, '\t\t\t"Key"\t\t"A"\n')
-        a.pop(65)
-        a.insert(65, '\t\t\t"Key"\t\t"S"\n')
-    else:
-        a.pop(65)
-        a.insert(65, '\t\t\t"Key"\t\t"A"\n')
-        a.pop(73)
-        a.insert(73, '\t\t\t"Key"\t\t"S"\n')
+    a.pop(65)
+    a.insert(65, '\t\t\t"Key"\t\t"S"\n')
+    a.pop(73)
+    a.insert(73, '\t\t\t"Key"\t\t"A"\n')
+    # если нужно, чтобы при каждом запуске клавиши менялись друг с другом местами
+    # b = a.index('\t\t\t"Key"\t\t"A"\n')
+    # if b == 65:
+    #     a.pop(73)
+    #     a.insert(73, '\t\t\t"Key"\t\t"A"\n')
+    #     a.pop(65)
+    #     a.insert(65, '\t\t\t"Key"\t\t"S"\n')
+    # else:
+    #     a.pop(65)
+    #     a.insert(65, '\t\t\t"Key"\t\t"A"\n')
+    #     a.pop(73)
+    #     a.insert(73, '\t\t\t"Key"\t\t"S"\n')
     listt = a
     dotakeys.close()
 
