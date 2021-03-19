@@ -1,7 +1,24 @@
 import requests
 import json
 from pprint import pprint
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
+
+OS_LIST = ['win', 'mac', 'linux']
+
+
+class SteamGame:
+    def __init__(self, name):
+        self.game_name = name
+        self.ram = None
+        self.graphics = None
+        self.processor = None
+
+    def calculate_koef(self):
+        """Метод возвращает коэффицент на основе требований
+        """
+        # ...
+        return True
+
 
 def check(a):
     try:
@@ -10,7 +27,8 @@ def check(a):
     except ValueError:
         return False
 
-def Input(list_all_game, list_all_status):
+
+def Input(list_all_game, list_all_status, soup):
     your_game_list = []
     i = 0
     while i == 0:
@@ -42,22 +60,24 @@ def Input(list_all_game, list_all_status):
             print('Вы ввели неверное Y или F')
             i -= 1
         i += 1
-    treatment(list_all_status, list_all_game, your_game_list)
+    treatment(list_all_status, list_all_game, your_game_list, soup)
+
+
 def main(list_all_game, list_all_status):
     url = 'https://store.steampowered.com/stats/?l=russian'
     r = requests.get(url)
     soup = BeautifulSoup(r.text, 'lxml')
     states = soup.find_all('tr', class_='player_count_row')
     games = soup.find_all('a', class_='gameLink')
-
     for state in states:
         list_all_status.append(state.text)
     for game in games:
         list_all_game.append(game.text)
 
-    Input(list_all_game, list_all_status)
+    Input(list_all_game, list_all_status, soup)
 
-def treatment(list_all_status, list_all_game, your_game_list):
+
+def treatment(list_all_status, list_all_game, your_game_list, soup):
     a = len(list_all_game)
     to_monitor = {}
     for game in your_game_list:
@@ -70,14 +90,53 @@ def treatment(list_all_status, list_all_game, your_game_list):
                 check2(value, game, to_monitor)
             i += 1
     pprint(to_monitor)
+    href(soup, your_game_list)
+
+
 def check2(value, game, to_monitor):
     result_value = ''
     for i in range(0, len(value)):
         if value[i] != '\n':
-            pass
             if value[i] != '\xa0':
                 result_value = result_value + value[i]
     to_monitor[game] = result_value
+
+
+def href(soup, your_game_list):
+    link_games = {}
+    for a in soup.find_all('a', class_='gameLink', href=True):
+        if a.text in your_game_list:
+            link_games[a.text] = a['href']
+    system_req(link_games, your_game_list)
+
+
+def system_req(link_games, your_game_list, type_os='win'):
+    steam_games = []  # здесь будут лежать объекты для каждой игры
+    if type_os not in OS_LIST:
+        exit(-1)
+    for game in your_game_list:
+        url = link_games[game]
+        req = requests.get(url)
+        soup = BeautifulSoup(req.text, 'lxml')
+        systems_req = soup.find_all('ul', class_='bb_ul')
+        for req in systems_req:
+            a: Tag = req
+            tmp = a.contents
+            for i in range(len(tmp)):
+                if isinstance(tmp[i].contents[0], Tag):
+                    b = tmp[i].contents[0].contents[0]
+                    b = str(b)
+                    v = tmp[i].contents[1]
+                    if str(b) == 'Memory:':
+                        print(game, 'оперативная память', v)
+                    elif str(b) == 'Processor:':
+                        print(game, 'процессор', v)
+                    elif str(b) == 'Graphics:':
+                        print(game, 'видеокарта', v)
+            break
+
+
+
 
 
 
