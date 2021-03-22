@@ -1,4 +1,5 @@
 import requests
+import json
 from pprint import pprint
 from bs4 import BeautifulSoup, Tag
 
@@ -52,21 +53,21 @@ class SteamGame:
         # Dual core - 90%
         # 1.7 GHz - 100%
         # i7 - 40%
-        if p.find('2 Duo'):
+        if p.find('2 Duo') != -1:
             a['cpu'] = float(0.9)
-        elif p.find('Dual core'):
+        elif p.find('Dual core') != -1:
             a['cpu'] = float(0.9)
-        elif p.find('Core 2'):
+        elif p.find('Core 2') != -1:
             a['cpu'] = float(0.9)
-        elif p.find('i3'):
+        elif p.find('i3') != -1:
             a['cpu'] = float(0.8)
-        elif p.find('i5'):
+        elif p.find('i5') != -1:
             a['cpu'] = float(0.6)
-        elif p.find('2.6 GHz'):
+        elif p.find('2.6 GHz') != -1:
             a['cpu'] = float(0.8)
-        elif p.find('1.7'):
+        elif p.find('1.7') != -1:
             a['cpu'] = float(1)
-        elif p.find('i.7'):
+        elif p.find('i7') != -1:
             a['cpu'] = float(0.4)
         v = self.graphics
         # 256 mb - 99%
@@ -78,26 +79,28 @@ class SteamGame:
         # GTX 950 - 85%
         # HD 7730 - 85%
         # GeForce 760
-        if v.find('256 mb'):
+        if v.find('256 MB') != -1:
             a['gpu'] = float(1)
-        elif v.find('GeForce 8600/9600GT'):
+        # elif v.find(''):
+        #     a['gpu'] = float()
+        elif v.find('GeForce 8600/9600GT') != -1:
             a['gpu'] = float(0.95)
-        elif v.find('2GB'):
+        elif v.find('2GB') != -1:
             a['gpu'] = float(0.85)
-        elif v.find('GT 640'):
+        elif v.find('GT 640') != -1:
             a['gpu'] = float(0.9)
-        elif v.find('1GB'):
+        elif v.find('1GB') != -1:
             a['gpu'] = float(0.9)
-        elif v.find('GTX 460'):
+        elif v.find('GTX 460') != -1:
             a['gpu'] = float(0.7)
-        elif v.find('GTX 950'):
+        elif v.find('GTX 950') != -1:
             a['gpu'] = float(0.85)
-        elif v.find('HD 7730'):
+        elif v.find('HD 7730') != -1:
             a['gpu'] = float(0.85)
-        elif v.find('GeForce 760'):
+        elif v.find('GeForce 760') != -1:
             a['gpu'] = float(0.85)
-
-
+        game = self.game_name
+        treatment_new(game, top)
 def check(a):
     try:
         int(a)
@@ -167,8 +170,7 @@ def treatment(list_all_status, list_all_game, your_game_list, soup):
                 value = b[11:x]
                 check2(value, game, to_monitor)
             i += 1
-    pprint(to_monitor)
-    href(soup, your_game_list)
+    href(soup, your_game_list, to_monitor)
 
 
 def check2(value, game, to_monitor):
@@ -180,15 +182,15 @@ def check2(value, game, to_monitor):
     to_monitor[game] = result_value
 
 
-def href(soup, your_game_list):
+def href(soup, your_game_list, to_monitor):
     link_games = {}
     for a in soup.find_all('a', class_='gameLink', href=True):
         if a.text in your_game_list:
             link_games[a.text] = a['href']
-    system_req(link_games, your_game_list)
+    system_req(link_games, your_game_list, to_monitor)
 
 
-def system_req(link_games, your_game_list, type_os='win'):
+def system_req(link_games, your_game_list, to_monitor, type_os='win'):
     top = {}
     steam_games = []  # здесь будут лежать объекты для каждой игры
     if type_os not in OS_LIST:
@@ -216,7 +218,34 @@ def system_req(link_games, your_game_list, type_os='win'):
                         rate.graphics = str(v)
             SteamGame.calculate_koef(rate, top)
             break
-    pprint(top)
+    sort_dict(top, to_monitor)
+
+def treatment_new(game, top):
+    a = top[game]['cpu']
+    b = top[game]['ram']
+    c = top[game]['gpu']
+    x = (a + b + c) / 3
+    x = int(x * 100)
+    top[game].clear
+    top[game] = x
+
+
+def sort_dict(top, to_monitor):
+    top_new = {}
+    list_dict = list(top.items())
+    list_dict.sort(key=lambda i: i[1])
+    top.clear()
+    k = 0
+    for i in list_dict:
+        k += 1
+        top_new[k] = f'{i[0]} - {i[1]}%'
+    print('Список игр выбранными вами и их максимальная активность за сегодня\n')
+    pprint(to_monitor)
+    print()
+    print('Топ выбранными вами игр, в которые больше вероятность и игроков, играюших на playkey'
+          '\nУказан процент игроков, которые могут себе позволить в '
+          'них поиграть, исходя из системных требований\n')
+    pprint(top_new)
 
 
 if __name__ == '__main__':
