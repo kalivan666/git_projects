@@ -1,5 +1,4 @@
 import requests
-import json
 from pprint import pprint
 from bs4 import BeautifulSoup, Tag
 
@@ -13,11 +12,90 @@ class SteamGame:
         self.graphics = None
         self.processor = None
 
-    def calculate_koef(self):
-        """Метод возвращает коэффицент на основе требований
-        """
-        # ...
-        return True
+    def calculate_koef(self, top):
+        top[self.game_name] = {}
+        a = top[self.game_name]
+        # 512 mb 100 %
+        # 2 gb 99,95 %
+        # 4 gb 98,5 %
+        # 6 gb 93,5 %
+        # 8 gb 89 %
+        # 10 gb 62 %
+        # 16 gb 56 %
+        # 16+ gb 11 %
+        if self.ram == ' 512 MB RAM':
+            a['ram'] = float(1)
+        elif self.ram == ' 1 GB RAM':
+            a['ram'] = float(1)
+        elif self.ram == ' 2 GB RAM':
+            a['ram'] = float(0.999)
+        elif self.ram == ' 4 GB RAM':
+            a['ram'] = float(0.985)
+        elif self.ram == ' 4 Гигабайт RAM':
+            a['ram'] = float(0.985)
+        elif self.ram == ' 6 GB RAM':
+            a['ram'] = float(0.935)
+        elif self.ram == ' 8 GB RAM':
+            a['ram'] = float(0.89)
+        elif self.ram == ' 10 GB RAM':
+            a['ram'] = float(0.64)
+        elif self.ram == ' 16 GB RAM':
+            a['ram'] = float(0.56)
+        elif self.ram == ' 32 GB RAM':
+            a['ram'] = float(0.11)
+        p = self.processor
+        # 2 duo - 90%
+        # Core 2 - 90%
+        # i3 - 80%
+        # i5 - 60%
+        # 2.6 GHz - 80%
+        # Dual core - 90%
+        # 1.7 GHz - 100%
+        # i7 - 40%
+        if p.find('2 Duo'):
+            a['cpu'] = float(0.9)
+        elif p.find('Dual core'):
+            a['cpu'] = float(0.9)
+        elif p.find('Core 2'):
+            a['cpu'] = float(0.9)
+        elif p.find('i3'):
+            a['cpu'] = float(0.8)
+        elif p.find('i5'):
+            a['cpu'] = float(0.6)
+        elif p.find('2.6 GHz'):
+            a['cpu'] = float(0.8)
+        elif p.find('1.7'):
+            a['cpu'] = float(1)
+        elif p.find('i.7'):
+            a['cpu'] = float(0.4)
+        v = self.graphics
+        # 256 mb - 99%
+        # GeForce 8600/9600GT - 95%
+        # 2GB - 85%
+        # GT 640 - 90%
+        # 1GB - 90%
+        # GTX 460 - 80%
+        # GTX 950 - 85%
+        # HD 7730 - 85%
+        # GeForce 760
+        if v.find('256 mb'):
+            a['gpu'] = float(1)
+        elif v.find('GeForce 8600/9600GT'):
+            a['gpu'] = float(0.95)
+        elif v.find('2GB'):
+            a['gpu'] = float(0.85)
+        elif v.find('GT 640'):
+            a['gpu'] = float(0.9)
+        elif v.find('1GB'):
+            a['gpu'] = float(0.9)
+        elif v.find('GTX 460'):
+            a['gpu'] = float(0.7)
+        elif v.find('GTX 950'):
+            a['gpu'] = float(0.85)
+        elif v.find('HD 7730'):
+            a['gpu'] = float(0.85)
+        elif v.find('GeForce 760'):
+            a['gpu'] = float(0.85)
 
 
 def check(a):
@@ -111,10 +189,13 @@ def href(soup, your_game_list):
 
 
 def system_req(link_games, your_game_list, type_os='win'):
+    top = {}
     steam_games = []  # здесь будут лежать объекты для каждой игры
     if type_os not in OS_LIST:
         exit(-1)
     for game in your_game_list:
+        rate = SteamGame
+        rate.game_name = game
         url = link_games[game]
         req = requests.get(url)
         soup = BeautifulSoup(req.text, 'lxml')
@@ -128,16 +209,14 @@ def system_req(link_games, your_game_list, type_os='win'):
                     b = str(b)
                     v = tmp[i].contents[1]
                     if str(b) == 'Memory:':
-                        print(game, 'оперативная память', v)
+                        rate.ram = str(v)
                     elif str(b) == 'Processor:':
-                        print(game, 'процессор', v)
+                        rate.processor = str(v)
                     elif str(b) == 'Graphics:':
-                        print(game, 'видеокарта', v)
+                        rate.graphics = str(v)
+            SteamGame.calculate_koef(rate, top)
             break
-
-
-
-
+    pprint(top)
 
 
 if __name__ == '__main__':
